@@ -9,8 +9,10 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
@@ -103,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
         cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
     }
 
+    @OptIn(markerClass = ExperimentalGetImage.class)
     private void processImageProxy(ImageProxy imageProxy) {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastProcessedTime < PROCESSING_DELAY) {
@@ -122,13 +125,13 @@ public class MainActivity extends AppCompatActivity {
                     if (mrz != null) {
                         MRZInfo info = MRZParser.parseVietnameseMRZ(mrz);
                         if(info != null) {
-                            resultTextView.setText(MRZParser.parseVietnameseMRZ(mrz).toString());
+                            resultTextView.setText(info.toString());
                         }
                     }
-                    else
-                    {
-                        resultTextView.setText("Place ID Card near bottom of camera");
-                    }
+//                    else
+//                    {
+//                        resultTextView.setText("Place ID Card near bottom of camera");
+//                    }
                     imageProxy.close();
                 })
                 .addOnFailureListener(e -> {
@@ -146,6 +149,9 @@ public class MainActivity extends AppCompatActivity {
 //        return null;
         if (text != null && !text.isEmpty()) {
             text = text.replaceAll("\\r?\\n", ""); // Remove all newline characters
+            text = text.replaceAll(" ", "");
+            text = text.replaceAll("«", "<"); // Dealing with wrong reading < to «
+
             return text;
         }
         return null;
