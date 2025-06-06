@@ -2,7 +2,14 @@ package com.example.id_card_reader.mrz;
 
 import android.util.Log;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class MRZParser {
+    public static final String VIETNAMESE_MRZ_REGEX
+            = "[A-Z0-9]{27}<<\\d" + "[\\r\\n]+"
+            + "[A-Z0-9]{18}<{11}\\d" + "[\\r\\n]+"
+            + "[A-Z<]{30}";
 
     /**
      * Parses a Vietnamese ID card MRZ string, which consists of three lines, each 30 characters long.
@@ -120,5 +127,19 @@ public class MRZParser {
      */
     private static boolean validateCheckDigit(String data, int checkDigit) {
         return calculateCheckDigit(data) == checkDigit;
+    }
+
+    public static String extractVietnameseMrzCode(String rawInput) {
+        Pattern pattern = Pattern.compile(VIETNAMESE_MRZ_REGEX);
+        Matcher matcher = pattern.matcher(rawInput);
+
+        if (matcher.find()) {
+            String mrzCode = matcher.group();
+            mrzCode = mrzCode.replaceAll("[\\r\\n]+", "");
+
+            return mrzCode;
+        }
+
+        return null;
     }
 }
