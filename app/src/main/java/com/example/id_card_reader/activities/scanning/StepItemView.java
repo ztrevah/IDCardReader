@@ -1,6 +1,5 @@
-package com.example.id_card_reader.activities.main;
+package com.example.id_card_reader.activities.scanning;
 
-import android.content.Context;
 import android.graphics.Typeface;
 import android.view.View;
 import android.widget.ImageView;

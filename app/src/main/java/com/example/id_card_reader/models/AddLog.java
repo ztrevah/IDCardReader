@@ -3,6 +3,7 @@ package com.example.id_card_reader.models;
 import android.graphics.Bitmap;
 
 import java.io.File;
+import java.util.Date;
 import java.util.UUID;
 
 public class AddLog {
@@ -10,10 +11,19 @@ public class AddLog {
     private String civilianId;
     private Bitmap imageBitmap;
 
+    private Date createdAt = new Date();
+
     public AddLog(UUID deviceId, String civilianId, Bitmap imageBitmap) {
         this.deviceId = deviceId;
         this.civilianId = civilianId;
         this.imageBitmap = imageBitmap;
+    }
+
+    public AddLog(UUID deviceId, String civilianId, Bitmap imageBitmap, Date createdAt) {
+        this.deviceId = deviceId;
+        this.civilianId = civilianId;
+        this.imageBitmap = imageBitmap;
+        this.createdAt = createdAt;
     }
 
     public UUID getDeviceId() {
@@ -38,5 +48,13 @@ public class AddLog {
 
     public void setImageBitmap(Bitmap imageBitmap) {
         this.imageBitmap = imageBitmap;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 }
