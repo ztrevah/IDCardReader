@@ -179,8 +179,6 @@ public class ScanningActivity extends AppCompatActivity {
 
         timeoutRunnable = () -> {
             if(current_step != STEP.MRZ_STEP) {
-                mrzInfo = null;
-                comparedFaceEmbedding = null;
                 Toast.makeText(this, "Timed out.", Toast.LENGTH_SHORT).show();
                 restartScanning();
             }
@@ -576,7 +574,6 @@ public class ScanningActivity extends AppCompatActivity {
     // Attempt to retrieve face embedding of the image from id card
     private void processFaceImageFromIdCard(byte[] imageBytes) {
         Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-        Bitmap originalBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
         if (bitmap != null) {
             InputImage inputImage = InputImage.fromBitmap(bitmap, 0);
             faceDetector.process(inputImage)
@@ -597,7 +594,7 @@ public class ScanningActivity extends AppCompatActivity {
                                 comparedFaceEmbedding = faceModelWrapper.getFaceEmbedding(croppedFace);
                                 if (comparedFaceEmbedding != null) {
 //                                    Toast.makeText(this, "Face for comparison loaded.", Toast.LENGTH_SHORT).show();
-                                    idImageBitmap = originalBitmap;
+                                    idImageBitmap = bitmap;
                                     startFaceStep();
                                 } else {
                                     Toast.makeText(this, "Error getting embedding from id image.", Toast.LENGTH_SHORT).show();
@@ -723,44 +720,51 @@ public class ScanningActivity extends AppCompatActivity {
                 .addOnSuccessListener(faces -> {
                     try {
                         if (!faces.isEmpty()) {
-                            for (Face face : faces) {
-                                Bitmap imageBitmap = ImageUtils.imageProxyToBitmap(imageProxy);
-                                if(imageBitmap == null) {
-                                    imageProxy.close();
-                                    isCameraProcessing.set(false);
-                                    return;
-                                }
-                                Bitmap faceBitmap = ImageUtils.cropAndScaleBitmap(
-                                        imageBitmap,
-                                        face.getBoundingBox(),
-                                        faceModelWrapper.getInputImageWidth(),
-                                        faceModelWrapper.getInputImageHeight()
-                                );
-                                if (faceBitmap != null) {
-                                    float[] currentEmbedding = faceModelWrapper.getFaceEmbedding(faceBitmap);
-                                    if (currentEmbedding != null) {
-                                        if (comparedFaceEmbedding != null) {
-                                            float distance = EmbeddingFeatureUtils.calculateDistance(currentEmbedding, comparedFaceEmbedding);
-                                            Log.d(TAG, "Face distance: " + distance);
-                                            if (distance <= 1.0f) {
-                                                if(isSendingLog.compareAndSet(false, true)) {
-                                                    runOnUiThread(() -> {
-                                                        Toast.makeText(ScanningActivity.this, "Face Matched!", Toast.LENGTH_SHORT).show();
-                                                    });
-                                                    AddLog addLog = new AddLog(
-                                                            new DeviceIdFactory(ScanningActivity.this).getDeviceId(),
-                                                            mrzInfo.getIdNumber(),
-                                                            imageBitmap
-                                                    );
-                                                    sendLog(addLog);
-                                                }
+                            if(faces.size() > 1) {
+                                runOnUiThread(() -> {
+                                    Toast.makeText(ScanningActivity.this, "Too many faces!", Toast.LENGTH_SHORT).show();
+                                });
+                                imageProxy.close();
+                                isCameraProcessing.set(false);
+                                return;
+                            }
+
+                            Bitmap imageBitmap = ImageUtils.imageProxyToBitmap(imageProxy);
+                            if(imageBitmap == null) {
+                                imageProxy.close();
+                                isCameraProcessing.set(false);
+                                return;
+                            }
+                            Bitmap faceBitmap = ImageUtils.cropAndScaleBitmap(
+                                    imageBitmap,
+                                    faces.get(0).getBoundingBox(),
+                                    faceModelWrapper.getInputImageWidth(),
+                                    faceModelWrapper.getInputImageHeight()
+                            );
+                            if (faceBitmap != null) {
+                                float[] currentEmbedding = faceModelWrapper.getFaceEmbedding(faceBitmap);
+                                if (currentEmbedding != null) {
+                                    if (comparedFaceEmbedding != null) {
+                                        float distance = EmbeddingFeatureUtils.calculateDistance(currentEmbedding, comparedFaceEmbedding);
+                                        Log.d(TAG, "Face distance: " + distance);
+                                        if (distance <= 1.0f) {
+                                            if(isSendingLog.compareAndSet(false, true)) {
+//                                                    runOnUiThread(() -> {
+//                                                        Toast.makeText(ScanningActivity.this, "Face Matched!", Toast.LENGTH_SHORT).show();
+//                                                    });
+                                                AddLog addLog = new AddLog(
+                                                        new DeviceIdFactory(ScanningActivity.this).getDeviceId(),
+                                                        mrzInfo.getIdNumber(),
+                                                        imageBitmap
+                                                );
+                                                sendLog(addLog);
                                             }
                                         }
                                     }
+                                }
 
-                                    if (!faceBitmap.isRecycled()) {
-                                        faceBitmap.recycle();
-                                    }
+                                if (!faceBitmap.isRecycled()) {
+                                    faceBitmap.recycle();
                                 }
                             }
                         }
