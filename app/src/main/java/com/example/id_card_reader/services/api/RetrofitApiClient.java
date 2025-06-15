@@ -1,6 +1,4 @@
-package com.example.id_card_reader;
-
-import com.example.id_card_reader.services.ApiService;
+package com.example.id_card_reader.services.api;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -9,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import java.util.concurrent.TimeUnit;
 
 public class RetrofitApiClient {
-    private static final String API_BASE_URL = "https://c11d-2a09-bac5-d45c-e6-00-17-145.ngrok-free.app/";
+    private static final String API_BASE_URL = "https://acs-server.runasp.net/";
     private ApiService apiService;
     private static RetrofitApiClient instance;
 

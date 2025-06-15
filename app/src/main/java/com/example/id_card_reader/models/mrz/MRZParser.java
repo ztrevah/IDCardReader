@@ -1,6 +1,4 @@
-package com.example.id_card_reader.mrz;
-
-import android.util.Log;
+package com.example.id_card_reader.models.mrz;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

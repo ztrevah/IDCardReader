@@ -11,13 +11,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
-import com.example.id_card_reader.DeviceIdFactory;
+import com.example.id_card_reader.services.device.DeviceIdFactory;
 import com.example.id_card_reader.R;
-import com.example.id_card_reader.RetrofitApiClient;
+import com.example.id_card_reader.services.api.RetrofitApiClient;
 import com.example.id_card_reader.activities.device_detail.DeviceDetailActivity;
 import com.example.id_card_reader.activities.scanning.ScanningActivity;
 import com.example.id_card_reader.models.DeviceInfo;
-import com.example.id_card_reader.services.ApiService;
+import com.example.id_card_reader.services.api.ApiService;
 
 import retrofit2.Call;
 import retrofit2.Callback;

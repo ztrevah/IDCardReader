@@ -1,4 +1,4 @@
-package com.example.id_card_reader;
+package com.example.id_card_reader.services.device;
 
 import android.content.Context;
 import android.content.SharedPreferences;

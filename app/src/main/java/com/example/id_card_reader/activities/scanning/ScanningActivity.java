@@ -40,16 +40,16 @@ import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.example.id_card_reader.DeviceIdFactory;
-import com.example.id_card_reader.FaceModelWrapper;
+import com.example.id_card_reader.services.device.DeviceIdFactory;
+import com.example.id_card_reader.services.facemodel.FaceModelWrapper;
 import com.example.id_card_reader.R;
-import com.example.id_card_reader.RetrofitApiClient;
+import com.example.id_card_reader.services.api.RetrofitApiClient;
 import com.example.id_card_reader.dialog.AccessDeniedDialog;
 import com.example.id_card_reader.dialog.AccessGrantedDialog;
-import com.example.id_card_reader.models.AddLog;
-import com.example.id_card_reader.mrz.MRZInfo;
-import com.example.id_card_reader.mrz.MRZParser;
-import com.example.id_card_reader.services.ApiService;
+import com.example.id_card_reader.models.dto.AddLogDto;
+import com.example.id_card_reader.models.mrz.MRZInfo;
+import com.example.id_card_reader.models.mrz.MRZParser;
+import com.example.id_card_reader.services.api.ApiService;
 import com.example.id_card_reader.utils.EmbeddingFeatureUtils;
 import com.example.id_card_reader.utils.ImageUtils;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -366,9 +366,11 @@ public class ScanningActivity extends AppCompatActivity {
         });
 
         timeoutHandler.removeCallbacks(timeoutRunnable);
-        timeoutHandler.postDelayed(timeoutRunnable, 10000);
-
-        mrzInfo = null;
+        timeoutHandler.postDelayed(timeoutRunnable, 20000);
+        
+        cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build();
         cameraProviderFuture.addListener(() -> {
             try {
                 cameraProvider = cameraProviderFuture.get();
@@ -435,17 +437,46 @@ public class ScanningActivity extends AppCompatActivity {
                         MRZInfo info = MRZParser.parseVietnameseMRZ(mrzCode);
                         if(info != null) {
                             mrzInfo = info;
-                            startNfcStep();
+                            checkMember(mrzInfo.getIdNumber());
+                            imageProxy.close();
+                        }
+                        else {
+                            imageProxy.close();
+                            isCameraProcessing.set(false);
                         }
                     }
-                    imageProxy.close();
-                    isCameraProcessing.set(false);
+                    else {
+                        imageProxy.close();
+                        isCameraProcessing.set(false);
+                    }
+
                 })
                 .addOnFailureListener(e -> {
                     Log.e("MRZ", "Text recognition failed", e);
                     imageProxy.close();
                     isCameraProcessing.set(false);
                 });
+    }
+
+    private void checkMember(String idNumber) {
+        ApiService apiService = RetrofitApiClient.getApiService();
+        Call<ResponseBody> call = apiService.getMemberInfo(new DeviceIdFactory(this).getDeviceId(), idNumber);
+
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if(response.isSuccessful()) {
+//                    Toast.makeText(ScanningActivity.this, "Member found", Toast.LENGTH_SHORT).show();
+                    startNfcStep();
+                }
+                isCameraProcessing.set(false);
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                isCameraProcessing.set(false);
+            }
+        });
     }
 
     private void startNfcStep() {
@@ -458,7 +489,7 @@ public class ScanningActivity extends AppCompatActivity {
         });
 
         timeoutHandler.removeCallbacks(timeoutRunnable);
-        timeoutHandler.postDelayed(timeoutRunnable, 15000);
+        timeoutHandler.postDelayed(timeoutRunnable, 20000);
 
         cameraProviderFuture.addListener(() -> {
             try {
@@ -640,7 +671,11 @@ public class ScanningActivity extends AppCompatActivity {
         });
 
         timeoutHandler.removeCallbacks(timeoutRunnable);
-        timeoutHandler.postDelayed(timeoutRunnable, 10000);
+        timeoutHandler.postDelayed(timeoutRunnable, 20000);
+
+        cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
+                .build();
 
         cameraProviderFuture.addListener(() -> {
             try {
@@ -752,12 +787,14 @@ public class ScanningActivity extends AppCompatActivity {
 //                                                    runOnUiThread(() -> {
 //                                                        Toast.makeText(ScanningActivity.this, "Face Matched!", Toast.LENGTH_SHORT).show();
 //                                                    });
-                                                AddLog addLog = new AddLog(
+                                                showAccessGrantedDialog();
+                                                restartScanning();
+                                                AddLogDto addLogDto = new AddLogDto(
                                                         new DeviceIdFactory(ScanningActivity.this).getDeviceId(),
                                                         mrzInfo.getIdNumber(),
                                                         imageBitmap
                                                 );
-                                                sendLog(addLog);
+                                                sendLog(addLogDto);
                                             }
                                         }
                                     }
@@ -782,17 +819,17 @@ public class ScanningActivity extends AppCompatActivity {
                 });
     }
 
-    private void sendLog(AddLog addLog) {
+    private void sendLog(AddLogDto addLogDto) {
         Log.d(TAG, "Sending log to server");
         try {
-            byte[] imageBytes = ImageUtils.bitmapToByteArray(addLog.getImageBitmap(), Bitmap.CompressFormat.JPEG, 100);
+            byte[] imageBytes = ImageUtils.bitmapToByteArray(addLogDto.getImageBitmap(), Bitmap.CompressFormat.JPEG, 100);
 
             RequestBody imageRequestBody = RequestBody.create(imageBytes, MediaType.parse("image/jpeg")); // Adjust MIME type if using PNG
             MultipartBody.Part imagePart = MultipartBody.Part.createFormData("image", "device_log_image.jpg", imageRequestBody);
 
-            UUID deviceId = addLog.getDeviceId();
-            String civilianId = addLog.getCivilianId();
-            Date createdAt = addLog.getCreatedAt();
+            UUID deviceId = addLogDto.getDeviceId();
+            String civilianId = addLogDto.getCivilianId();
+            Date createdAt = addLogDto.getCreatedAt();
 
             RequestBody deviceIdPart = RequestBody.create(deviceId.toString(), MediaType.parse("text/plain"));
             RequestBody civilianIdPart = RequestBody.create(civilianId, MediaType.parse("text/plain"));
@@ -821,8 +858,6 @@ public class ScanningActivity extends AppCompatActivity {
                         // If the person is not the member of the room
                         if(response.code() == 403) {
                             comparedFaceEmbedding = null;
-                            showAccessDeniedDialog();
-                            restartScanning();
                         }
                         // If the device is not registered
                         else if(response.code() == 404) {
@@ -844,8 +879,6 @@ public class ScanningActivity extends AppCompatActivity {
 
                             AlertDialog dialog = builder.create();
                             dialog.show();
-
-                            restartScanning();
                         }
                         else {
                             comparedFaceEmbedding = null;
@@ -865,8 +898,6 @@ public class ScanningActivity extends AppCompatActivity {
 
                             AlertDialog dialog = builder.create();
                             dialog.show();
-
-                            restartScanning();
                         }
 
                     }
@@ -878,7 +909,6 @@ public class ScanningActivity extends AppCompatActivity {
                     Toast.makeText(ScanningActivity.this, "Device error", Toast.LENGTH_LONG).show();
                     Log.e(TAG, "Device Error", t);
                     comparedFaceEmbedding = null;
-                    restartScanning();
                     isSendingLog.set(false);
                 }
             });
@@ -892,16 +922,18 @@ public class ScanningActivity extends AppCompatActivity {
 
     private void showAccessGrantedDialog() {
         runOnUiThread(() -> {
-            AccessGrantedDialog dialog = new AccessGrantedDialog(
-                    this,
-                    mrzInfo.getIdNumber(),
-                    mrzInfo.getFullName(),
-                    mrzInfo.getDateOfBirth(),
-                    mrzInfo.getGender(),
-                    idImageBitmap
-            );
+            if(mrzInfo != null && idImageBitmap != null) {
+                AccessGrantedDialog dialog = new AccessGrantedDialog(
+                        this,
+                        mrzInfo.getIdNumber(),
+                        mrzInfo.getFullName(),
+                        mrzInfo.getDateOfBirth(),
+                        mrzInfo.getGender(),
+                        idImageBitmap
+                );
 
-            dialog.show();
+                dialog.show();
+            }
         });
     }
 

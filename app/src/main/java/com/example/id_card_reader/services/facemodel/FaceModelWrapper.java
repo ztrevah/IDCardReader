@@ -1,10 +1,9 @@
-package com.example.id_card_reader;
+package com.example.id_card_reader.services.facemodel;
 
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.id_card_reader.utils.ImageUtils;
 

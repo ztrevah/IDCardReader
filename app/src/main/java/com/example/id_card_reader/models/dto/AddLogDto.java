@@ -1,25 +1,24 @@
-package com.example.id_card_reader.models;
+package com.example.id_card_reader.models.dto;
 
 import android.graphics.Bitmap;
 
-import java.io.File;
 import java.util.Date;
 import java.util.UUID;
 
-public class AddLog {
+public class AddLogDto {
     private UUID deviceId;
     private String civilianId;
     private Bitmap imageBitmap;
 
     private Date createdAt = new Date();
 
-    public AddLog(UUID deviceId, String civilianId, Bitmap imageBitmap) {
+    public AddLogDto(UUID deviceId, String civilianId, Bitmap imageBitmap) {
         this.deviceId = deviceId;
         this.civilianId = civilianId;
         this.imageBitmap = imageBitmap;
     }
 
-    public AddLog(UUID deviceId, String civilianId, Bitmap imageBitmap, Date createdAt) {
+    public AddLogDto(UUID deviceId, String civilianId, Bitmap imageBitmap, Date createdAt) {
         this.deviceId = deviceId;
         this.civilianId = civilianId;
         this.imageBitmap = imageBitmap;

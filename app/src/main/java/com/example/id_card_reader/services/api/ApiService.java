@@ -1,4 +1,4 @@
-package com.example.id_card_reader.services;
+package com.example.id_card_reader.services.api;
 
 import com.example.id_card_reader.models.DeviceInfo;
 

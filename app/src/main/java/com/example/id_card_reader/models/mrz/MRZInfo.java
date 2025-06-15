@@ -1,4 +1,4 @@
-package com.example.id_card_reader.mrz;
+package com.example.id_card_reader.models.mrz;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

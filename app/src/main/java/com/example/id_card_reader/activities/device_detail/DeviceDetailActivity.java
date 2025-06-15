@@ -8,11 +8,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.id_card_reader.DeviceIdFactory;
+import com.example.id_card_reader.services.device.DeviceIdFactory;
 import com.example.id_card_reader.R;
-import com.example.id_card_reader.RetrofitApiClient;
+import com.example.id_card_reader.services.api.RetrofitApiClient;
 import com.example.id_card_reader.models.DeviceInfo;
-import com.example.id_card_reader.services.ApiService;
+import com.example.id_card_reader.services.api.ApiService;
 
 import retrofit2.Call;
 import retrofit2.Callback;
