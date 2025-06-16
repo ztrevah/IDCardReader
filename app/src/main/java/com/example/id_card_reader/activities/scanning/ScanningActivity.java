@@ -852,7 +852,6 @@ public class ScanningActivity extends AppCompatActivity {
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     if (response.isSuccessful()) {
                         comparedFaceEmbedding = null;
-                        showAccessGrantedDialog();
                         restartScanning();
                     } else {
                         // If the person is not the member of the room
